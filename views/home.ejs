@@ -1,0 +1,10 @@
+<div class="mx-3">
+    <h1>Home Page</h1>
+    <% urls.forEach(url=> { %>
+        <li>
+            ShortURL- <%= url.shortURL %> <br>
+            &emsp;&nbsp;OriginalURL- <%= url.originalURL %> <br>
+            &emsp;&nbsp;Total Visits- <%= url.visitHistory.length %> <br>
+        </li>
+    <% }) %>
+</div>
