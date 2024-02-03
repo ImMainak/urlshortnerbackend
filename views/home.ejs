@@ -1,10 +1,77 @@
 <div class="mx-3">
     <h1>Home Page</h1>
-    <% urls.forEach(url=> { %>
-        <li>
-            ShortURL- <%= url.shortURL %> <br>
-            &emsp;&nbsp;OriginalURL- <%= url.originalURL %> <br>
-            &emsp;&nbsp;Total Visits- <%= url.visitHistory.length %> <br>
-        </li>
-    <% }) %>
+
+    <form class="mb-4" onsubmit="formSubmit(event)">
+        <div class="mb-3">
+            <label for="email" class="form-label">URL</label>
+            <input type="text" class="form-control" id="originalURL" name="originalURL" autocomplete="off" aria-describedby="emailHelp" required />
+            <div id="emailHelp" class="form-text">Enter URL To Create Short URL/QR Code</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary me-2" id="url_create">Create Short URL</button>
+
+        <button type="submit" class="btn btn-primary" id="qr_create">Create QR Code</button>
+    </form>
+
+    <% if (urls.length != 0) { %>
+        <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th class="text-center">#Sl. No.</th>
+                <th class="text-center">ShortURL</th>
+                <th class="text-center">OriginalURL</th>
+                <th class="text-center">Total Visits</th>
+                <th class="text-center">QR Code</th>
+              </tr>
+            </thead>
+    
+            <tbody>
+                <% urls.forEach((url, index)=> { %>
+                    <tr>
+                        <td class="align-middle text-center text-wrap"><%= index + 1 %></th>
+                        <td class="align-middle text-center text-wrap"><%= url.shortURL ?? 'N/A' %></td>
+                        <td class="align-middle text-center text-wrap" style="word-wrap: break-word; min-width: 160px; max-width: 160px;"><%= url.originalURL %></td>
+                        <td class="align-middle text-center text-wrap"><%= url.visitHistory.length %></td>
+                        <td class="align-middle text-center"><img src="<%= url.qrCode %>" /></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } %>
+
+    <script>
+        const formSubmit = (event) => {
+            event.preventDefault();
+            let urlName = document.getElementById('originalURL');
+            let formData = {
+                originalURL: urlName.value
+            }
+
+            if (event?.submitter?.id == 'url_create') {
+                fetch( window.location.origin + '/create_url', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-type': 'application/json'
+                    },
+                    body: JSON.stringify(formData),
+                }).then((res) => res.json()).then((res) => {
+                    if (res.status == 200) {
+                        window.location.href = '/web/home';
+                    }
+                });
+            } else if (event?.submitter?.id == 'qr_create') {
+                fetch( window.location.origin + '/create_qr', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-type': 'application/json'
+                    },
+                    body: JSON.stringify(formData),
+                }).then((res) => res.json()).then((res) => {
+                    if (res.status == 200) {
+                        window.location.href = '/web/home';
+                    }
+                });
+            }
+        }
+    </script>
 </div>

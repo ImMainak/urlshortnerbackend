@@ -1,25 +1,67 @@
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="home">urlShortner</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="home">Home</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="about">About</a>
-          </li>
-        </ul>
-        <form class="d-flex" role="search">
-          <input class="me-2" type="search" placeholder="Search" aria-label="Search">
-          <button class="btn btn-outline-success" type="submit">Search</button>
-          <a class="btn btn-primary mx-1 " href='login' role="button">Login</a>
-          <a class="btn btn-primary mx-1 " href='signup' role="button">Sign Up</a>
-        </form>
-        <button class="btn btn-primary mx-1">Logout</button>
-      </div>
+  <div class="container-fluid">
+    <a class="navbar-brand" href="home">urlShortner</a>
+    
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/web/home">Home</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="/web/about">About</a>
+        </li>
+      </ul>
+
+      <form class="d-flex" role="search">
+        <% if (loggedIN) { %>
+          <input class="form-control me-2" type="search" placeholder="Search" autocomplete="off" id="searchURL" aria-label="Search">
+          <button class="btn btn-outline-success" type="submit" onclick="searchData(event)">Search</button>
+        <% } %>
+
+        <% if (!loggedIN) { %>
+          <a class="btn btn-primary mx-1 " href='/web/login' role="button">Login</a>
+          <a class="btn btn-primary mx-1 " href='/web/signup' role="button">Sign Up</a>
+        <% } %>
+      </form>
+
+      <% if (loggedIN) { %>
+        <button class="btn btn-primary mx-1" id="logoutButton">Logout</button>
+      <% } %>
+
+      <script>
+        const logoutButton = document.getElementById('logoutButton');
+
+        if (logoutButton)
+          logoutButton.addEventListener('click', () => {
+            fetch( window.location.origin + '/user/logout', {
+              method: 'PUT',
+              headers: { 
+                'Content-type': 'application/json'
+              },
+            }).then((res) => res.json()).then((res) => {
+              if (res.status == 200) {
+                window.location.href = '/web/login';
+              }
+            });
+          });
+
+        const searchData = (event) => {
+          event.preventDefault();
+          
+          let searchURL = document.getElementById('searchURL');
+          
+          if (searchURL.value)
+            window.location.href = '/web/home?search=' + searchURL.value;
+          else
+            window.location.href = '/web/home';
+        }
+      </script>
     </div>
-  </nav>
+  </div>
+</nav>

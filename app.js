@@ -14,6 +14,8 @@ import express from 'express';
 import fs from 'fs';
 import bodyParser from 'body-parser';
 import path from 'path';
+import cookieParser from 'cookie-parser';
+// const cookieParser = require('cookie-parser');
 require('dotenv').config({path: __dirname + '/.env'})
 var app = express();
 
@@ -34,6 +36,8 @@ app.use(bodyParser.urlencoded({
     limit: '50mb',
     extended: true
 })); // support encoded bodies
+
+app.use(cookieParser());
 
 /* using middleware */
 app.use(function(req, res, next) {
@@ -57,9 +61,9 @@ app.set('views', path.resolve('./views'));
 global.constants = require(global.appPath + '/config/constants.cjs');
 
 
-
-// var apiRouter = require("./routes/apiRoutes.js");
 import apiRouter from './routes/apiRoutes.js';
+import websiteRouter from './routes/websiteRoutes.js';
+import userRouter from './routes/userRoutes.js';
 // var socketFunc = require('./helpers/socketFunctions');
 
 /**
@@ -108,6 +112,8 @@ app.use(InterceptorForAllResponse);
 
 //------------------------------------------- ROUTES ----------------------------------------------//
 app.use("/", apiRouter); // API Routes
+app.use("/web", websiteRouter); // Website Routes
+app.use("/user", userRouter); // User Routes
 //------------------------------------------- ROUTES ----------------------------------------------//
 
 // catch 404 and forward to error handler

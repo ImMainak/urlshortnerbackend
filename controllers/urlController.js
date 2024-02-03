@@ -6,9 +6,7 @@ import responseMessages from '../ResponseMessages.js';
 
 import { nanoid } from 'nanoid';
 import moment from 'moment';
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-var QRCode = require('qrcode');
+import QRCode from 'qrcode';
 
 /*
 |------------------------------------------------ 
@@ -24,20 +22,35 @@ export const urlCreate = (req, res) => {
     (async () => {
         let purpose = "Create Short URL";
         try {
+            let userID = req.headers.userID;
             let body = req.body;
-            let shortURL = nanoid(8);
-            let createData = {
-                shortURL: shortURL,
-                originalURL: body.originalURL
-            }
-            let urlCreate = await URLRepositories.create(createData);
+            let urlData = await URLRepositories.findOne({ userID: userID, originalURL: body.originalURL });
+            let shortURLList = (await URLRepositories.find()).filter(f => f.shortURL).map(m => m.shortURL);
 
-            urlCreate.shortURL = process.env.HOST_URL + '/' + urlCreate.shortURL;
+            let shortURL = nanoid(8);
+
+            while(shortURLList.includes(shortURL)) {
+                shortURL = nanoid(8);
+            }
+
+            if (urlData) {
+                await URLRepositories.updateOne({ _id: urlData._id }, { shortURL: shortURL });
+            } else {
+                let createData = {
+                    userID: userID,
+                    shortURL: shortURL,
+                    originalURL: body.originalURL
+                }
+                await URLRepositories.create(createData);
+            }
+
+            urlData = await URLRepositories.findOne({ userID: userID, originalURL: body.originalURL });
+            urlData.shortURL = process.env.HOST_URL + '/' + urlData.shortURL;
 
             return res.send({
                 status: 200,
                 msg: responseMessages.urlCreate,
-                data: urlCreate,
+                data: urlData,
                 purpose: purpose
             })
         }
@@ -67,7 +80,16 @@ export const urlList = (req, res) => {
     (async () => {
         let purpose = "Find All Short URL List";
         try {
-            let urlList = await URLRepositories.find();
+            let userID = req.headers.userID;
+            let query = req.query;
+            let where = {
+                userID: userID
+            }
+
+            if (query.search)
+                where.originalURL = { $regex: '.*' + query.search + '.*', $options: 'i' };
+
+            let urlList = await URLRepositories.find(where);
 
             urlList.forEach(element => {
                 element.shortURL = process.env.HOST_URL + '/' + element.shortURL;
@@ -106,8 +128,9 @@ export const urlDetails = (req, res) => {
     (async () => {
         let purpose = "Find Short URL Details";
         try {
+            let userID = req.headers.userID;
             let url = req.params.url;
-            let urlData = await URLRepositories.findOne({ shortURL: url });
+            let urlData = await URLRepositories.findOne({ userID: userID, shortURL: url });
 
             if (!urlData) {
                 return res.send({
@@ -195,8 +218,9 @@ export const urlAnalytics = (req, res) => {
     (async () => {
         let purpose = "Find Short URL Analytics";
         try {
+            let userID = req.headers.userID;
             let url = req.params.url;
-            let urlData = await URLRepositories.findOne({ shortURL: url });
+            let urlData = await URLRepositories.findOne({ userID: userID, shortURL: url });
 
             if (!urlData) {
                 return res.send({
@@ -233,183 +257,47 @@ export const urlAnalytics = (req, res) => {
 
 /*
 |------------------------------------------------ 
-| API name          :  urlHome
-| Response          :  Respective response message in JSON format
-| Logic             :  Find Short URL Analytics
-| Request URL       :  BASE_URL/url_analytics/:url
-| Request method    :  GET
-| Author            :  Mainak Saha
-|------------------------------------------------
-*/
-export const urlHome = (req, res) => {
-    (async () => {
-        let purpose = "Find Short URL Analytics";
-        try {
-            let urlList = await URLRepositories.find();
-
-            urlList.forEach(element => {
-                element.shortURL = process.env.HOST_URL + '/' + element.shortURL;
-            })
-
-            return res.render('index', {
-                urls: urlList,
-                location: 'home'
-            });
-        }
-        catch (err) {
-            console.log("Find Short URL Analytics Error : ", err);
-            return res.send({
-                status: 500,
-                msg: responseMessages.serverError,
-                data: {},
-                purpose: purpose
-            })
-        }
-    })()
-}
-
-/*
-|------------------------------------------------ 
 | API name          :  urlAnalytics
 | Response          :  Respective response message in JSON format
-| Logic             :  Find Short URL Analytics
-| Request URL       :  BASE_URL/url_analytics/:url
-| Request method    :  GET
+| Logic             :  Create QR Code
+| Request URL       :  BASE_URL/create_qr
+| Request method    :  POST
 | Author            :  Mainak Saha
 |------------------------------------------------
 */
 export const qrCreate = (req, res) => {
     (async () => {
-        let purpose = "Find Short URL Analytics";
+        let purpose = "Create QR Code";
         try {
-            let urlList = await URLRepositories.find();
+            let userID = req.headers.userID;
+            let body = req.body;
+            let urlData = await URLRepositories.findOne({ userID: userID, originalURL: body.originalURL });
 
-            urlList.forEach(element => {
-                element.shortURL = process.env.HOST_URL + '/' + element.shortURL;
-            })
+            let qrCode = await QRCode.toDataURL(urlData?.originalURL ?? body.originalURL, { height: 130, width: 130 }).then((data) => data);
+            
+            if (urlData) {
+                await URLRepositories.updateOne({ _id: urlData._id }, { $set: { qrCode: qrCode } });
+            } else {
+                let createData = {
+                    userID: userID,
+                    originalURL: body.originalURL,
+                    qrCode: qrCode
+                }
+                await URLRepositories.create(createData);
+            }
 
-            QRCode.toFile('qrCode.png',urlList[0].shortURL, (err, data) => {
-                if (err)
-                    return console.log("Error");
-                console.log(data);
-            })
+            urlData = await URLRepositories.findOne({ userID: userID, originalURL: body.originalURL });
+            urlData.shortURL = process.env.HOST_URL + '/' + urlData.shortURL;
 
             res.send({
                 status: 200,
-                data: {},
+                msg: responseMessages.qrCreate,
+                data: urlData,
                 purpose: purpose
             })
         }
         catch (err) {
-            console.log("Find Short URL Analytics Error : ", err);
-            return res.send({
-                status: 500,
-                msg: responseMessages.serverError,
-                data: {},
-                purpose: purpose
-            })
-        }
-    })()
-}
-
-/*
-|------------------------------------------------ 
-| API name          :  urlAbout
-| Response          :  Respective response message in JSON format
-| Logic             :  Find Short URL Analytics
-| Request URL       :  BASE_URL/url_analytics/:url
-| Request method    :  GET
-| Author            :  Mainak Saha
-|------------------------------------------------
-*/
-export const urlAbout = (req, res) => {
-    (async () => {
-        let purpose = "Find Short URL Analytics";
-        try {
-            let urlList = await URLRepositories.find();
-
-            urlList.forEach(element => {
-                element.shortURL = process.env.HOST_URL + '/' + element.shortURL;
-            })
-
-            return res.render('index', {
-                location: 'about'
-            });
-        }
-        catch (err) {
-            console.log("Find Short URL Analytics Error : ", err);
-            return res.send({
-                status: 500,
-                msg: responseMessages.serverError,
-                data: {},
-                purpose: purpose
-            })
-        }
-    })()
-}
-
-/*
-|------------------------------------------------ 
-| API name          :  urlLogin
-| Response          :  Respective response message in JSON format
-| Logic             :  Find Short URL Analytics
-| Request URL       :  BASE_URL/url_analytics/:url
-| Request method    :  GET
-| Author            :  Mainak Saha
-|------------------------------------------------
-*/
-export const urlLogin = (req, res) => {
-    (async () => {
-        let purpose = "Find Short URL Analytics";
-        try {
-            let urlList = await URLRepositories.find();
-
-            urlList.forEach(element => {
-                element.shortURL = process.env.HOST_URL + '/' + element.shortURL;
-            })
-
-            return res.render('index', {
-                location: 'login'
-            });
-        }
-        catch (err) {
-            console.log("Find Short URL Analytics Error : ", err);
-            return res.send({
-                status: 500,
-                msg: responseMessages.serverError,
-                data: {},
-                purpose: purpose
-            })
-        }
-    })()
-}
-
-/*
-|------------------------------------------------ 
-| API name          :  urlSignUp
-| Response          :  Respective response message in JSON format
-| Logic             :  Find Short URL Analytics
-| Request URL       :  BASE_URL/url_analytics/:url
-| Request method    :  GET
-| Author            :  Mainak Saha
-|------------------------------------------------
-*/
-export const urlSignUp = (req, res) => {
-    (async () => {
-        let purpose = "Find Short URL Analytics";
-        try {
-            let urlList = await URLRepositories.find();
-
-            urlList.forEach(element => {
-                element.shortURL = process.env.HOST_URL + '/' + element.shortURL;
-            })
-
-            return res.render('index', {
-                location: 'signup'
-            });
-        }
-        catch (err) {
-            console.log("Find Short URL Analytics Error : ", err);
+            console.log("Create QR Code Error : ", err);
             return res.send({
                 status: 500,
                 msg: responseMessages.serverError,

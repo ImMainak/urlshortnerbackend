@@ -20,21 +20,18 @@ module.exports = {
     home_testimonial_image_url: process.env.HOST_URL + '/uploads/testimonial',
     identity_image:  '/uploads/identity',
     jwtAccessTokenOptions: {
-        secret: 'PMToolAPI#@2023',
+        secret: 'URLShortner#@2024',
         options: {
             algorithm: 'HS256',
-            expiresIn: '30d',
-            audience: 'aud:Aprodence',
-            issuer: 'Aprodence-' + process.env.GIT_BRANCH + '-' + (process.env.NODE_ENV == 'development' ? 'DEV' : 'PROD') + '@' + require('os').hostname()
+            expiresIn: '30d'
         }
     },
     jwtRefreshTokenOptions: {
-        secret: 'PMToolAPI#@2023',
+        secret: 'URLShortner#@2024',
         options: {
             algorithm: 'HS256',
-            expiresIn: '30d',
-            audience: 'aud:Aprodence',
-            issuer: 'Aprodence-' + process.env.GIT_BRANCH + '-' + (process.env.NODE_ENV == 'development' ? 'DEV' : 'PROD') + '@' + require('os').hostname()
+            expiresIn: '40d'
         }
     },
+    cookieMaxAge: 30 * 24 * 60 * 60 * 1000
 }

@@ -3,6 +3,7 @@ export default {
     registrationSuccess: "Registered Successfully",
     duplicateEmail: "Email already exists",
     loginSuccess: "Logged in successfully",
+    logoutSuccess: "Logged out successfully",
     invalidCreds: "Invalid credentials",
     invalidEmail: "Invalid email address",
     invalidPassword: "Invalid password",
@@ -10,6 +11,7 @@ export default {
     userNotFound: 'User not found',
     authFailure: 'Authentication failed',
     authRequired: 'Authentication required',
+    userList: 'User list has been fetched successfully',
     userDetails: 'User details has been fetched successfully',
     userNotFound: 'User does not exist',
     userUpdate: 'User profile has been updated successfully',
@@ -21,6 +23,6 @@ export default {
     urlDetails: 'URL details has been fetched successfully',
     urlNotFound: 'URL not found',
     urlAnalytics: 'URL analytics has been fetched successfully',
-    noteDelete: 'Note has been deleted successfully'
-
+    noteDelete: 'Note has been deleted successfully',
+    qrCreate: 'QR Code has been created successfully'
 }
